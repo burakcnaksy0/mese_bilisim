@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>İletişim Formu</title>
+  </head>
+  <body>
+    <h1>İletişim Formu</h1>
+    <form method="post">
+      {% csrf_token %} {{ form.as_p }}
+      <button type="submit">Gönder</button>
+    </form>
+  </body>
+</html>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+{% load static %}
+
+<html lang="tr">
+  <link rel="stylesheet" type="text/css" href="{% static 'trys/style.css' %}" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Template</title>
+  </head>
+  <body>
+    <a href=""><h4>HOME</h4></a>
+    <h1>İsimler</h1>
+    {% for key,value in name_list %}
+    <a href=""><p>{{ key}} : {{value}}</p></a>
+    {% endfor %}
+  </body>
+</html>

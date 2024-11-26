@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Error 404</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh; /* Sayfanın tamamını kaplamak için */
+        margin: 0; /* Varsayılan margin'i kaldır */
+      }
+      h1 {
+        text-align: center;
+      }
+      a {
+        text-align: center;
+        margin-top: 20px; /* Üstten boşluk ekle */
+        color: blue;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Error 404</h1>
+    <a href="{% url 'movielogin' %}">Anasayfaya dönün.</a>
+  </body>
+</html>

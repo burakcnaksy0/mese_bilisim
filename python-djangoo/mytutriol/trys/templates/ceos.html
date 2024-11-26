@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Ceo List</title>
+  </head>
+  <body>
+    <h1>Ceo List</h1>
+    {%for ceo in ceo_list%}
+    <li style="font-size: 110%">
+      <strong> {{ceo.name}} ---- {{ceo.car}} </strong>
+    </li>
+    {%endfor%}
+  </body>
+</html>

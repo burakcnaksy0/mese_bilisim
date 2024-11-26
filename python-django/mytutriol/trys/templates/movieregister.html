@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Copmlete</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+      }
+      h1 {
+        color: #007bff;
+        margin-bottom: 10px;
+      }
+      p {
+        font-size: 18px;
+        margin-bottom: 20px;
+      }
+      ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      li {
+        background-color: #ffffff;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      a.button {
+        padding: 10px 15px;
+        font-size: 18px;
+        background-color: #007bff;
+        color: white;
+        border-radius: 5px;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 20px;
+      }
+      a.button:hover {
+        background-color: #0056b3;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <p>İşlem başarılı!</p>
+      <h1>Film Başarıyla Eklenmiştir.</h1>
+
+      <h1 style="color: rgb(34, 30, 30)">Eklenen Filmler</h1>
+      <ul>
+        {% for movie in movie_list %}
+        <li>
+          <strong>{{ movie.name }}</strong> - ( {{ movie.year }} ) -
+          {{movie.topic}}
+        </li>
+        {% endfor %}
+      </ul>
+      <h4>Total number of movies : {{number}}</h4>
+
+      <a href="{% url 'movielogin' %}" class="button">Yeni Film Kaydet</a>
+    </div>
+  </body>
+</html>

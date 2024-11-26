@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        a {
+            text-decoration: none;
+            color: #007BFF;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background: #fff;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .action-links {
+            margin-top: 10px;
+        }
+        .action-links a {
+            margin-right: 10px;
+            color: #dc3545; /* Delete link color */
+        }
+    </style>
+</head>
+<body>
+<h1>Blog Home</h1>
+
+<a href="{% url 'post_new' %}"
+   style="display: inline-block; margin-bottom: 20px; padding: 10px 15px; background: #007BFF; color: white; border-radius: 5px;">
+    New Post
+</a>
+
+<ul>
+    {% for post in posts %}
+    <li>
+        <a href="{% url 'post_detail' post.id %}">
+            <strong>{{ post.title }}</strong>
+        </a>
+        <p>{{ post.date_posted }}</p>
+        <div class="action-links">
+            <a href="{% url 'post_edit' post.id %}">edit</a>
+            <a href="{% url 'post_delete' post.id %}">delete</a>
+            <a href="{% url 'post_detail' post.id %}">detail</a>
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+
+</body>
+</html>

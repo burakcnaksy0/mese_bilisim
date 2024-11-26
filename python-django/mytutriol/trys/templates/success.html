@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Başarılı</title>
+    <style>
+      body {
+        font-size: 20px;
+        text-align: center;
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        padding: 20px;
+        background-color: #f8f9fa;
+      }
+      h1 {
+        color: #3528a7;
+      }
+      ul {
+        list-style-type: none; /* Madde işaretlerini kaldırır */
+        padding: 0; /* İçerik dolgusunu kaldırır */
+      }
+      li {
+        margin: 5px 0; /* Elemanlar arasındaki boşluk */
+      }
+      a {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 30px;
+      }
+      a:hover {
+        background-color: #0056b3;
+      }
+      p {
+        font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Teşekkürler</h1>
+    <p>Kayıt işlemi tamamlanmıştır.</p>
+
+    <ul>
+      {% for contact in contact_list %}
+      <li>{{ contact.name }} ({{ contact.email }})</li>
+      {% endfor %}
+    </ul>
+
+    <a href="{% url 'contact' %}">Yeni bir kişi ekleyin.</a>
+  </body>
+</html>

@@ -1,0 +1,65 @@
+<h2 style="text-align: center; color: #333">Silmek İstediğinizi Onaylayın</h2>
+<p style="text-align: center; color: #555">
+  <strong>{{ movie.name }}</strong> filmine ait tüm veriler silinecektir. Bu
+  işlemi geri almanız mümkün değildir.
+</p>
+
+<form
+  method="post"
+  style="display: flex; justify-content: center; margin-top: 20px"
+>
+  {% csrf_token %}
+  <button
+    type="submit"
+    style="
+      background-color: rgb(151, 18, 18);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    "
+  >
+    Sil
+  </button>
+  <a
+    href="{% url 'movielist' %}"
+    style="
+      text-decoration: none;
+      color: white;
+      margin-left: 10px;
+      font-size: 16px;
+      border: 1px solid blue;
+      border-radius: 5px;
+      padding: 10px 20px;
+      background-color: blue;
+    "
+  >
+    İptal
+  </a>
+</form>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    padding: 20px;
+  }
+
+  h2 {
+    margin-bottom: 10px;
+  }
+
+  p {
+    margin-bottom: 20px;
+  }
+
+  button:hover {
+    background-color: rgb(112, 8, 8);
+  }
+
+  a:hover {
+    background-color: rgba(0, 0, 255, 0.1);
+  }
+</style>

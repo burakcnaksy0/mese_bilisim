@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Computer Listesi</title>
+  </head>
+  <body>
+    <h1>Computer İnformation</h1>
+    <ul>
+      {% for computer in Computer %}
+      <li style="font-size: 140%">
+        {{ computer.name }} - {{ computer.model }} - ({{ computer.date }})
+      </li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>

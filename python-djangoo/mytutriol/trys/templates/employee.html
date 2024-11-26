@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Employee List</title>
+  </head>
+  <body>
+    <h1>Employee List</h1>
+
+    {%for employe in employee%}
+
+    <li style="font-size: 130%"><b>Name :</b> {{employe.first_name}} <br /></li>
+    <li style="font-size: 130%"><b>Surname :</b> {{employe.surname}} <br /></li>
+    <li style="font-size: 130%"><b>Age :</b> {{employe.age}} <br /></li>
+    <li style="font-size: 130%"> <b>Department :</b> {{employe.department.dep_name}} <br /> </li>
+    <li style="font-size: 130%"><b>Department Number : </b> {{employe.department.dep_number}}</li>
+    <br>
+      
+    {%endfor%}
+  </body>
+</html>

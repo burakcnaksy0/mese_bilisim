@@ -1,0 +1,5 @@
+img {
+    max-width: 100%; /* Resmi maksimum genişlik olarak %100 yapar */
+    height: auto;    /* Yüksekliği otomatik ayarlar, oranı korur */
+    border: 2px solid #000; /* Resme kenarlık ekler */
+}

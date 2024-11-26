@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Başarılı</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            color: #28a745;
+        }
+        .user-list {
+            font-size: 130%;
+            list-style-type: none; /* Madde işaretlerini kaldırır */
+            padding: 0; /* İçerik dolgusunu kaldırır */
+        }
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>İşlem Başarılı.</h1>
+    <p>Kayıt Oluşturuldu.</p>
+    <ul class="user-list">
+        {% for app in app_list %}
+            <li>{{ app.name }} - - - {{ app.surname }} - - - {{ app.username }}</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'applogin' %}">App için yeni kullanıcı kaydı</a>
+</body>
+</html>

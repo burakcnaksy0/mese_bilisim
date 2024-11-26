@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eklenen Filmler</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background-color: #f4f4f4;
+      }
+      h1 {
+        padding-left: 40px;
+        color: #333;
+      }
+
+      ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      li {
+        padding: 10px;
+        background: white;
+        margin: 10px 0;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      button {
+        padding: 8px 12px;
+        font-size: 14px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-left: 10px;
+      }
+      button a {
+        color: white;
+        text-decoration: none;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .back-button {
+        background-color: rgb(70, 11, 11);
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Eklenen Filmler</h1>
+
+    <ul>
+      {% for movie in movie_list %}
+      <li>
+        {{ movie.name }} - ({{ movie.year }}) - {{ movie.topic }}
+        <button style="background-color: rgb(79, 79, 205)">
+          <a href="{% url 'update_movie' movie.id %}">Edit</a>
+        </button>
+
+        <button style="background-color: rgb(79, 79, 205)">
+          <a href="{% url 'detail' movie.id %}">Details</a>
+        </button>
+        <button style="background-color: rgb(128, 10, 43)">
+          <a href="{% url 'delete' movie.id %}">Delete</a>
+        </button>
+      </li>
+      {% endfor %}
+    </ul>
+
+    <ul>
+      <li>
+        <button class="back-button">
+          <a href="{% url 'movielogin' %}">Geri</a>
+        </button>
+        <h4 style="padding-left: 12px">Total number of movies : {{number}}</h4>
+      </li>
+    </ul>
+  </body>
+</html>
