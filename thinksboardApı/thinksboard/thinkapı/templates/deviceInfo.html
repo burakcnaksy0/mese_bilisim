@@ -123,10 +123,21 @@
     <form method="post">
         {% csrf_token %}
         {{ deviceform.as_p }}
-        <button type="submit">Submit</button>
+        <button type="submit">Seç</button>
     </form>
-    {% if error %}
-    <p class="error">{{ error }}</p>
+
+    {% if device_info %}
+    <h2>Cihaz Bilgileri</h2>
+    <p>ID: {{ device_info.id }}</p>
+    <p>Ad: {{ device_info.name }}</p>
+    <p>Tür: {{ device_info.type }}</p>
+
+    <h2>Telemetri Verileri</h2>
+    <ul>
+        {% for key, value in telemetry_info.items %}
+        <li>{{ key }}: {{ value.0.value }}</li>
+        {% endfor %}
+    </ul>
     {% endif %}
 
 </div>

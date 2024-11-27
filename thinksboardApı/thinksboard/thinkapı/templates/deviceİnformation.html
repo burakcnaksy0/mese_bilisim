@@ -25,7 +25,7 @@
             border-radius: 15px;
             box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 450px;
+            max-width: 900px;
             text-align: center;
             transition: all 0.3s ease-in-out;
         }
@@ -37,59 +37,12 @@
 
         h1 {
             margin-bottom: 25px;
-            font-size: 28px;
+            font-size: 32px;
             font-weight: bold;
             color: #1e3a8a;
         }
 
-        form p {
-            margin-bottom: 20px;
-            font-size: 16px;
-        }
-
-        select {
-            padding: 12px;
-            font-size: 16px;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            width: 100%;
-            box-sizing: border-box;
-            transition: border-color 0.3s ease;
-        }
-
-        select:focus {
-            border-color: #6b73ff;
-            outline: none;
-        }
-
-        button {
-            padding: 14px;
-            font-size: 16px;
-            font-weight: bold;
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 20px;
-            width: 100%;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            transition: background 0.3s, transform 0.2s, box-shadow 0.3s ease-in-out;
-        }
-
-        button:hover {
-            background: linear-gradient(135deg, #0056b3, #003d80);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .error {
-            color: #ff4d4f;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-
-        .device-info {
+        .device-info, .telemetry-info {
             margin-top: 25px;
             padding: 20px;
             background: #f9fafb;
@@ -100,20 +53,79 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        .device-info h2 {
+        .device-info h2, .telemetry-info h2 {
             margin-bottom: 15px;
             color: #1e3a8a;
-            font-size: 20px;
+            font-size: 22px;
         }
 
-        .device-info pre {
-            background: #f4f4f9;
-            padding: 15px;
-            border-radius: 8px;
-            overflow-x: auto;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
+        .device-info ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .device-info li {
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .device-info strong {
             color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f9;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr.key-row {
+            background-color: #e0f7fa;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        td {
+            word-wrap: break-word;
+            max-width: 200px;  /* Allow content to break into multiple lines */
+        }
+
+        /* Responsive styling */
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .device-info, .telemetry-info {
+                padding: 15px;
+            }
+
+            table, th, td {
+                font-size: 12px;
+                padding: 8px;
+            }
         }
     </style>
 </head>
@@ -123,9 +135,47 @@
 
     {% if device_info %}
     <div class="device-info">
-        <h2>Device Details:</h2>
-        <pre>{{ device_info }}</pre>
+        <h2>Device Details</h2>
+        <ul>
+            <li><strong>ID:</strong> {{ device_info.id }}</li>
+            <li><strong>Name:</strong> {{ device_info.name }}</li>
+            <li><strong>Type:</strong> {{ device_info.type }}</li>
+            <li><strong>Status:</strong> {{ device_info.status }}</li>
+        </ul>
     </div>
+    {% else %}
+    <p>No device information available.</p>
+    {% endif %}
+
+    {% if telemetry_info %}
+    <div class="telemetry-info">
+        <h2>Telemetry Data</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>Telemetry Key</th>
+                <th>Timestamp</th>
+                <th>Value</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for key, entries in telemetry_info.items %}
+            <tr class="key-row">
+                <td colspan="3"><strong>{{ key }}</strong></td>
+            </tr>
+            {% for entry in entries %}
+            <tr class="data-row">
+                <td>{{ key }}</td>
+                <td>{{ entry.ts }}</td>
+                <td>{{ entry.value }}</td>
+            </tr>
+            {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>No telemetry data available.</p>
     {% endif %}
 </div>
 </body>
