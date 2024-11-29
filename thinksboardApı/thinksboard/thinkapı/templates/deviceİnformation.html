@@ -4,179 +4,131 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Device Information</title>
-    <style>
-        /* General styles */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #6b73ff, #000dff);
-            color: #333;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow: hidden;
-        }
-
-        .form-container {
-            background: #fff;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 900px;
-            text-align: center;
-            transition: all 0.3s ease-in-out;
-        }
-
-        .form-container:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        h1 {
-            margin-bottom: 25px;
-            font-size: 32px;
-            font-weight: bold;
-            color: #1e3a8a;
-        }
-
-        .device-info, .telemetry-info {
-            margin-top: 25px;
-            padding: 20px;
-            background: #f9fafb;
-            border-radius: 10px;
-            text-align: left;
-            font-size: 14px;
-            color: #333;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .device-info h2, .telemetry-info h2 {
-            margin-bottom: 15px;
-            color: #1e3a8a;
-            font-size: 22px;
-        }
-
-        .device-info ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .device-info li {
-            margin-bottom: 10px;
-            font-size: 16px;
-        }
-
-        .device-info strong {
-            color: #333;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f4f4f9;
-            font-weight: bold;
-        }
-
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        tr.key-row {
-            background-color: #e0f7fa;
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        td {
-            word-wrap: break-word;
-            max-width: 200px;  /* Allow content to break into multiple lines */
-        }
-
-        /* Responsive styling */
-        @media (max-width: 768px) {
-            .form-container {
-                padding: 20px;
-            }
-
-            h1 {
-                font-size: 24px;
-            }
-
-            .device-info, .telemetry-info {
-                padding: 15px;
-            }
-
-            table, th, td {
-                font-size: 12px;
-                padding: 8px;
-            }
-        }
-    </style>
+    <!-- Include Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Include Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
-<div class="form-container">
-    <h1>Device Information</h1>
+<body class="bg-light text-dark">
+    <div class="container my-5">
+        <h1 class="text-center mb-4">Device Information</h1>
 
-    {% if device_info %}
-    <div class="device-info">
-        <h2>Device Details</h2>
-        <ul>
-            <li><strong>ID:</strong> {{ device_info.id }}</li>
-            <li><strong>Name:</strong> {{ device_info.name }}</li>
-            <li><strong>Type:</strong> {{ device_info.type }}</li>
-            <li><strong>Status:</strong> {{ device_info.status }}</li>
-        </ul>
-    </div>
-    {% else %}
-    <p>No device information available.</p>
-    {% endif %}
+        <!-- Device Details -->
+        {% if device_info %}
+        <div class="card shadow-sm mb-5">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">Device Details</h2>
+            </div>
+            <div class="card-body">
+                <p><strong>ID:</strong> {{ device_info.id }}</p>
+                <p><strong>Name:</strong> {{ device_info.name }}</p>
+                <p><strong>Status:</strong>
+                    <span class="badge {% if device_info.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
+                        {{ device_info.status|title }}
+                    </span>
+                </p>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning text-center" role="alert">
+            No device information available.
+        </div>
+        {% endif %}
 
-    {% if telemetry_info %}
-    <div class="telemetry-info">
-        <h2>Telemetry Data</h2>
-        <table>
-            <thead>
-            <tr>
-                <th>Telemetry Key</th>
-                <th>Timestamp</th>
-                <th>Value</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for key, entries in telemetry_info.items %}
-            <tr class="key-row">
-                <td colspan="3"><strong>{{ key }}</strong></td>
-            </tr>
-            {% for entry in entries %}
-            <tr class="data-row">
-                <td>{{ key }}</td>
-                <td>{{ entry.ts }}</td>
-                <td>{{ entry.value }}</td>
-            </tr>
-            {% endfor %}
-            {% endfor %}
-            </tbody>
-        </table>
+        <!-- Telemetry History -->
+        {% if telemetry_history %}
+        <h2 class="text-center mb-3">Telemetry History</h2>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Telemetry Key</th>
+                        <th>Timestamp</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for key, entries in telemetry_history.items %}
+                        {% for entry in entries %}
+                        <tr>
+                            <td>{{ key }}</td>
+                            <td>{{ entry.formatted_ts }}</td>
+                            <td>{{ entry.value }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center" role="alert">
+            No telemetry history available.
+        </div>
+        {% endif %}
+
+        <!-- Telemetry Chart -->
+        <div class="card shadow-sm mt-5">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">Telemetry Chart</h2>
+            </div>
+            <div class="card-body">
+                <canvas id="telemetryChart" width="800" height="400"></canvas>
+            </div>
+        </div>
     </div>
-    {% else %}
-    <p>No telemetry data available.</p>
-    {% endif %}
-</div>
+
+    <!-- Chart.js Script -->
+    <script>
+        // Convert Django variables to JavaScript
+        const chartLabels = {{ chart_labels|safe }}; // Timestamps
+        const chartData = {{ chart_data|safe }};     // Telemetry values
+
+        // Set up the chart
+        const ctx = document.getElementById('telemetryChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line', // Line chart
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'Telemetry Data',
+                    data: chartData,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Telemetry Over Time'
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Timestamp'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Value'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+
+    <!-- Include Bootstrap JS (Optional, for enhanced interactivity) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

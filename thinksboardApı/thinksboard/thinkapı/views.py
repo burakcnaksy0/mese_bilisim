@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from .forms import UserLogInForm, DevicesListForm
 import requests
 import json
+from datetime import datetime
 
 BASEURL = "https://thingsboard.cloud/api"
 LOGIN_URL = f"{BASEURL}/auth/login"
@@ -70,12 +71,12 @@ def devicePrefer(request):
         deviceform = DevicesListForm(request.POST)
         if deviceform.is_valid():
             device_key = deviceform.cleaned_data["device"]
-            device_data = DEVICE_TELEMETRY.get(device_key)  # İlgili cihaz verisini al
+            device_data = DEVICE_TELEMETRY.get(device_key)
             if not device_data:
                 return render(request, "deviceInfo.html", {"error": "Invalid device selected!"})
 
             device_uuid = device_data["uuid"]
-            telemetry_url = device_data["telemetry"]  # Telemetri URL'sini alın
+            telemetry_url = device_data["telemetry"]
             headers = {'Authorization': f'Bearer {token}'}
 
             # Cihaz bilgilerini al
@@ -95,10 +96,38 @@ def devicePrefer(request):
             device_info = device_response.json()
             telemetry_info = telemetry_response.json()
 
-            # Cihaz ve Telemetri bilgisini birlikte gönder
+            # Telemetri geçmişini saklama
+            telemetry_history = request.session.get('telemetry_history', {})
+
+            for key, entries in telemetry_info.items():
+                if key not in telemetry_history:
+                    telemetry_history[key] = []
+
+                for entry in entries:
+                    # Format timestamp to human-readable time
+                    timestamp = datetime.utcfromtimestamp(entry['ts'] / 1000.0).strftime('%Y-%m-%d %H:%M:%S')
+                    entry['formatted_ts'] = timestamp
+
+                    # Eğer giriş zaten geçmişte yoksa ekle
+                    if entry not in telemetry_history[key]:
+                        telemetry_history[key].append(entry)
+
+            # Telemetri geçmişini oturumda güncelle
+            request.session['telemetry_history'] = telemetry_history
+            chart_labels = []
+            chart_data = []
+            for key, entries in telemetry_history.items():
+                for entry in entries:
+                    chart_labels.append(entry['formatted_ts'])
+                    chart_data.append(entry['value'])
+            # Cihaz ve telemetri bilgisini gönder
             return render(request, "deviceİnformation.html", {
                 "device_info": device_info,
-                "telemetry_info": telemetry_info
+                "telemetry_info": telemetry_info,
+                "telemetry_history": telemetry_history,
+                "chart_labels": chart_labels,
+                "chart_data": chart_data,
+
             })
         else:
             return render(request, "deviceInfo.html", {"error": "Invalid form submission!"})
