@@ -124,8 +124,13 @@
         {% csrf_token %}
         {{ deviceform.as_p }}
         <button type="submit">Seç</button>
-    </form>
 
+    </form>
+    <a href="{% url 'loginpage' %}">
+            <button type="submit">
+                LoginPage
+            </button>
+        </a>
     {% if device_info %}
     <h2>Cihaz Bilgileri</h2>
     <p>ID: {{ device_info.id }}</p>

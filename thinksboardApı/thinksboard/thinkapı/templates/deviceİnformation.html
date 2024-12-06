@@ -10,88 +10,97 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-light text-dark">
-    <div class="container my-5">
-        <h1 class="text-center mb-4">Device Information</h1>
+<div class="container my-5">
+    <h1 class="text-center mb-4">Device Information</h1>
+    <a href="{% url 'device_ınfo' %}">
+        <button type="submit" class="btn btn-primary mb-3">
+            Back
+        </button>
+    </a>
 
-        <!-- Device Details -->
-        {% if device_info %}
-        <div class="card shadow-sm mb-5">
-            <div class="card-header bg-primary text-white">
-                <h2 class="mb-0">Device Details</h2>
-            </div>
-            <div class="card-body">
-                <p><strong>ID:</strong> {{ device_info.id }}</p>
-                <p><strong>Name:</strong> {{ device_info.name }}</p>
-                <p><strong>Status:</strong>
-                    <span class="badge {% if device_info.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
-                        {{ device_info.status|title }}
-                    </span>
-                </p>
-            </div>
+    <!-- Device Details -->
+    {% if device_info %}
+    <div class="card shadow-sm mb-5">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">Device Details</h2>
         </div>
-        {% else %}
-        <div class="alert alert-warning text-center" role="alert">
-            No device information available.
-        </div>
-        {% endif %}
-
-        <!-- Telemetry History -->
-        {% if telemetry_history %}
-        <h2 class="text-center mb-3">Telemetry History</h2>
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Telemetry Key</th>
-                        <th>Timestamp</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for key, entries in telemetry_history.items %}
-                        {% for entry in entries %}
-                        <tr>
-                            <td>{{ key }}</td>
-                            <td>{{ entry.formatted_ts }}</td>
-                            <td>{{ entry.value }}</td>
-                        </tr>
-                        {% endfor %}
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="alert alert-info text-center" role="alert">
-            No telemetry history available.
-        </div>
-        {% endif %}
-
-        <!-- Telemetry Chart -->
-        <div class="card shadow-sm mt-5">
-            <div class="card-header bg-primary text-white">
-                <h2 class="mb-0">Telemetry Chart</h2>
-            </div>
-            <div class="card-body">
-                <canvas id="telemetryChart" width="800" height="400"></canvas>
-            </div>
+        <div class="card-body">
+            <p><strong>ID:</strong> {{ device_info.id }}</p>
+            <p><strong>Name:</strong> {{ device_info.name }}</p>
+            <p><strong>Status:</strong>
+                <span class="badge {% if device_info.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
+                    {{ device_info.status|title }}
+                </span>
+            </p>
         </div>
     </div>
+    {% else %}
+    <div class="alert alert-warning text-center" role="alert">
+        No device information available.
+    </div>
+    {% endif %}
 
-    <!-- Chart.js Script -->
-    <script>
-        // Convert Django variables to JavaScript
-        const chartLabels = {{ chart_labels|safe }}; // Timestamps
-        const chartData = {{ chart_data|safe }};     // Telemetry values
+    <!-- Telemetry History -->
+    {% if telemetry_history %}
+    <h2 class="text-center mb-3">Telemetry History</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+            <tr>
+                <th>Telemetry Key</th>
+                <th>Timestamp</th>
+                <th>Value</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for key, entries in telemetry_history.items %}
+            {% for entry in entries %}
+            <tr>
+                <td>{{ key }}</td>
+                <td>{{ entry.formatted_ts }}</td>
+                <td>{{ entry.value }}</td>
+            </tr>
+            {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center" role="alert">
+        No telemetry history available.
+    </div>
+    {% endif %}
 
-        // Set up the chart
-        const ctx = document.getElementById('telemetryChart').getContext('2d');
+    <!-- Telemetry Charts -->
+    {% if charts_data %}
+    <h2 class="text-center mt-5">Telemetry Charts</h2>
+    {% for key, chart in charts_data.items %}
+    <div class="card shadow-sm my-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">{{ key }}</h3>
+        </div>
+        <div class="card-body">
+            <canvas id="chart-{{ key }}" width="800" height="400"></canvas>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+</div>
+
+<!-- Chart.js Script -->
+<script>
+    // Render each telemetry chart dynamically
+    const chartsData = {{ charts_data|safe }}; // Django variable to JS
+
+    for (const [key, data] of Object.entries(chartsData)) {
+        const ctx = document.getElementById(`chart-${key}`).getContext('2d');
         new Chart(ctx, {
-            type: 'line', // Line chart
+            type: 'line',
             data: {
-                labels: chartLabels,
+                labels: data.labels, // Timestamps
                 datasets: [{
-                    label: 'Telemetry Data',
-                    data: chartData,
+                    label: key,
+                    data: data.data, // Values
                     borderColor: 'rgba(75, 192, 192, 1)',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
                     borderWidth: 2,
@@ -103,7 +112,7 @@
                 plugins: {
                     title: {
                         display: true,
-                        text: 'Telemetry Over Time'
+                        text: `${key} Over Time`
                     },
                     legend: {
                         display: false
@@ -126,9 +135,10 @@
                 }
             }
         });
-    </script>
+    }
+</script>
 
-    <!-- Include Bootstrap JS (Optional, for enhanced interactivity) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Include Bootstrap JS (Optional, for enhanced interactivity) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

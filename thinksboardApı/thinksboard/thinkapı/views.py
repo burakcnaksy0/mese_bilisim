@@ -57,7 +57,7 @@ DEVICE_TELEMETRY = {
     },
     "5": {
         "uuid": "87a23920-abe9-11ef-ba27-0bc777b49120",
-        "telemetry": "values/timeseries?keys=status,temperature"
+        "telemetry": "values/timeseries?keys=quality,temperature"
     }
 }
 
@@ -99,9 +99,13 @@ def devicePrefer(request):
             # Telemetri geçmişini saklama
             telemetry_history = request.session.get('telemetry_history', {})
 
+            # Her cihazın telemetri geçmişini ayrı bir anahtar altında sakla
+            if device_uuid not in telemetry_history:
+                telemetry_history[device_uuid] = {}
+
             for key, entries in telemetry_info.items():
-                if key not in telemetry_history:
-                    telemetry_history[key] = []
+                if key not in telemetry_history[device_uuid]:
+                    telemetry_history[device_uuid][key] = []
 
                 for entry in entries:
                     # Format timestamp to human-readable time
@@ -109,25 +113,28 @@ def devicePrefer(request):
                     entry['formatted_ts'] = timestamp
 
                     # Eğer giriş zaten geçmişte yoksa ekle
-                    if entry not in telemetry_history[key]:
-                        telemetry_history[key].append(entry)
+                    if entry not in telemetry_history[device_uuid][key]:
+                        telemetry_history[device_uuid][key].append(entry)
 
             # Telemetri geçmişini oturumda güncelle
             request.session['telemetry_history'] = telemetry_history
-            chart_labels = []
-            chart_data = []
-            for key, entries in telemetry_history.items():
-                for entry in entries:
-                    chart_labels.append(entry['formatted_ts'])
-                    chart_data.append(entry['value'])
+
+            # Grafik verilerini hazırlama
+            charts_data = {}
+            for key, entries in telemetry_history[device_uuid].items():
+                chart_labels = [entry['formatted_ts'] for entry in entries]
+                chart_data = [entry['value'] for entry in entries]
+                charts_data[key] = {
+                    "labels": chart_labels,
+                    "data": chart_data
+                }
+
             # Cihaz ve telemetri bilgisini gönder
             return render(request, "deviceİnformation.html", {
                 "device_info": device_info,
                 "telemetry_info": telemetry_info,
-                "telemetry_history": telemetry_history,
-                "chart_labels": chart_labels,
-                "chart_data": chart_data,
-
+                "telemetry_history": telemetry_history[device_uuid],
+                "charts_data": charts_data,
             })
         else:
             return render(request, "deviceInfo.html", {"error": "Invalid form submission!"})
