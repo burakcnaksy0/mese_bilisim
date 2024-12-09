@@ -12,10 +12,10 @@
 <body class="bg-light text-dark">
 <div class="container my-5">
     <h1 class="text-center mb-4">Device Information</h1>
+
+    <!-- Back Button -->
     <a href="{% url 'device_ınfo' %}">
-        <button type="submit" class="btn btn-primary mb-3">
-            Back
-        </button>
+        <button type="button" class="btn btn-primary mb-3">Back</button>
     </a>
 
     <!-- Device Details -->
@@ -85,12 +85,35 @@
     </div>
     {% endfor %}
     {% endif %}
+
+    <!-- Export Form -->
+    <div class="card shadow-sm my-5">
+        <div class="card-header bg-secondary text-white">
+            <h3 class="mb-0">Export Data</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{% url 'export_data' %}">
+                {% csrf_token %}
+                <input type="hidden" name="device_uuid" value="{{ device_info.uuid }}">
+
+                <div class="mb-3">
+                    <label for="format" class="form-label">Export Format:</label>
+                    <select id="format" name="format" class="form-select">
+                        <option value="excel">Excel</option>
+                        <option value="pdf">PDF</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-success">Export</button>
+            </form>
+        </div>
+    </div>
+
 </div>
 
 <!-- Chart.js Script -->
 <script>
-    // Render each telemetry chart dynamically
-    const chartsData = {{ charts_data|safe }}; // Django variable to JS
+    const chartsData = {{ charts_data|safe }};
 
     for (const [key, data] of Object.entries(chartsData)) {
         const ctx = document.getElementById(`chart-${key}`).getContext('2d');

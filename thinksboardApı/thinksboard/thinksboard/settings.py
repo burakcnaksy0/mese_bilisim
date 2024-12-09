@@ -49,7 +49,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'thinksboard.urls'
-SESSION_COOKIE_AGE = 3600  # 1 hour in seconds
+SESSION_COOKIE_AGE = 36000  # 1 hour in seconds
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 TEMPLATES = [
     {

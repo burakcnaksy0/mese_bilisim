@@ -5,8 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9981e526-effe-42ad-b028-2f529b21aad5" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/mucitrobot.py" beforeDir="false" afterPath="$PROJECT_DIR$/mucitrobot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../thinksboardApı/thinksboard/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/../thinksboardApı/thinksboard/db.sqlite3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../thinksboardApı/thinksboard/thinkapı/templates/deviceİnformation.html" beforeDir="false" afterPath="$PROJECT_DIR$/../thinksboardApı/thinksboard/thinkapı/templates/deviceİnformation.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../thinksboardApı/thinksboard/thinkapı/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/../thinksboardApı/thinksboard/thinkapı/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../thinksboardApı/thinksboard/thinkapı/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/../thinksboardApı/thinksboard/thinkapı/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../thinksboardApı/thinksboard/thinksboard/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/../thinksboardApı/thinksboard/thinksboard/settings.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,9 +27,9 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="2ppoDnv58FfyB9yJYxzd8NX81a4" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -33,6 +37,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Python.main.executor": "Run",
     "Python.mucitrobot.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "main",
