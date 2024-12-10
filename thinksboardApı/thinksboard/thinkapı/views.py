@@ -17,6 +17,43 @@ BASEURL = "https://thingsboard.cloud/api"
 LOGIN_URL = f"{BASEURL}/auth/login"
 USER_URL = f"{BASEURL}/auth/user"
 
+import random
+import json
+from django.shortcuts import render
+from django.http import JsonResponse
+from .utils import make_api_request
+
+DEVICES_TELEMETRY = {
+    "1": {"Erişim şifresi": "pDjy7eYL9BxweVinPuBY", "telemetry": "temperature,state,rez"},
+    "2": {"Erişim şifresi": "aqBEbTWN7rHlhufbRyND", "telemetry": "temperature,temp"},
+    "3": {"Erişim şifresi": "5Dmo4qa8vJfkUNcP4TCy", "telemetry": "temperature,machineState"},
+    "4": {"Erişim şifresi": "0oIGlBuB5Rr5rtGKJGwX", "telemetry": "temperature,clock"},
+    "5": {"Erişim şifresi": "NpMnH8RUsyXZkE8LsCKx", "telemetry": "temperature,quality"},
+}
+
+THINGSBOARD_BASE_URL = "http://thingsboard.cloud/api/v1"
+
+def send_random_telemetry(request, device_id):
+    device = DEVICES_TELEMETRY.get(device_id)
+    if not device:
+        return JsonResponse({"error": "Device not found."}, status=404)
+
+    # Rastgele değerler üret
+    telemetry_keys = device["telemetry"].split(",")
+    random_telemetry = {key: random.randint(0, 100) for key in telemetry_keys}
+
+    # Telemetri URL'si oluştur
+    access_token = device["Erişim şifresi"]
+    url = f"{THINGSBOARD_BASE_URL}/{access_token}/telemetry"
+
+    # API çağrısı yap
+    headers = {'Content-Type': 'application/json'}
+    response, error = make_api_request("post", url, headers=headers, data=random_telemetry)
+
+    if error:
+        return JsonResponse({"error": error}, status=500)
+    return JsonResponse({"message": "Telemetry sent successfully", "data": random_telemetry})
+
 
 def userlogın(request):
     if request.method == 'POST':
@@ -154,6 +191,7 @@ DEVICE_TELEMETRY = {
     }
 }
 
+
 def export_data(request):
     # Retrieve telemetry history and charts data from the session
     telemetry_history = request.session.get('telemetry_history', {})
@@ -276,3 +314,17 @@ def export_data(request):
 
     else:
         return HttpResponse("Unsupported export format.", status=400)
+
+
+'''
+DEVICE_TELEMETRY = {
+    "1": {"Erişim şifresi": "pDjy7eYL9BxweVinPuBY", "telemetry": "temperature,state,rez"},
+    "2": {"Erişim şifresi": "aqBEbTWN7rHlhufbRyND", "telemetry": "temperature,temp"},
+    "3": {"Erişim şifresi": "5Dmo4qa8vJfkUNcP4TCy", "telemetry": "temperature,machineState"},
+    "4": {"Erişim şifresi": "0oIGlBuB5Rr5rtGKJGwX", "telemetry": "temperature,clock"},
+    "5": {"Erişim şifresi": "NpMnH8RUsyXZkE8LsCKx", "telemetry": "temperature,quality"},
+}
+
+THINGSBOARD_BASE_URL = "http://thingsboard.cloud/api/v1"
+
+'''
