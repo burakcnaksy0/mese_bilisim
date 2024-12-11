@@ -13,7 +13,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import matplotlib.pyplot as plt
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from openpyxl import Workbook
 
 BASEURL = "https://thingsboard.cloud/api"
@@ -26,6 +26,7 @@ DEVICE_ACCESS = {
     "3": {"Erişim şifresi": "5Dmo4qa8vJfkUNcP4TCy", "telemetry": "temperature,machineState"},
     "4": {"Erişim şifresi": "0oIGlBuB5Rr5rtGKJGwX", "telemetry": "temperature,clock"},
     "5": {"Erişim şifresi": "NpMnH8RUsyXZkE8LsCKx", "telemetry": "temperature,quality"},
+    "6": {"Erişim şifresi": "PKZIzE6ohmtw4MlgWilz", "telemetry": "temp,key"},
 }
 DEVICE_TELEMETRY = {
     "1": {
@@ -47,6 +48,10 @@ DEVICE_TELEMETRY = {
     "5": {
         "uuid": "87a23920-abe9-11ef-ba27-0bc777b49120",
         "telemetry": "values/timeseries?keys=quality,temperature"
+    },
+    "6": {
+        "uuid": "dab4ae41-b3c8-11ef-8d27-31960e941324",
+        "telemetry": "values/timeseries?keys=key,temp"
     }
 }
 
@@ -80,6 +85,15 @@ def userlogın(request):
     else:
         form = UserLogInForm()
         return render(request, "login.html", {"form": form})
+
+
+def get_random_telemetry(request):
+    # Generate random telemetry data
+    telemetry_data = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "value": round(random.uniform(10, 100), 2),
+    }
+    return JsonResponse(telemetry_data)
 
 
 def devicePrefer(request):
@@ -119,12 +133,14 @@ def devicePrefer(request):
             }
 
             # Save telemetry_history and charts_data in session
-            request.session['telemetry_history'] = {device_info["uuid"]: telemetry_history}
+            session_data = request.session.get('telemetry_history', {})
+            session_data[device_info["uuid"]] = telemetry_history
+            request.session['telemetry_history'] = session_data
             request.session['device_uuid'] = device_info["uuid"]
             request.session['charts_data'] = charts_data  # Save charts_data (not just the uuid)
 
             # Start a new thread to send random telemetry data
-            telemetry_thread = threading.Thread(target=send_random_telemetry, args=(device_key, device_data))
+            telemetry_thread = threading.Thread(target=send_random_telemetry, args=(request, device_key, device_data))
             telemetry_thread.daemon = True  # Thread will stop when Django stops
             telemetry_thread.start()
 

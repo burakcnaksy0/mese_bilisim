@@ -1,53 +1,58 @@
-import requests
+import json
 import random
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from django.contrib.sites import requests
 
-def send_random_telemetry(request, device_key, device_dataz):
+
+def send_random_telemetry(device_key, device_data):
     """
-    Generate 100 random telemetry data points for each key and send them to the ThingsBoard API.
+    Generate random telemetry data every 5 seconds and send it via WebSocket and ThingsBoard API.
     """
+    # ThingsBoard API setup
     access_token = device_data["Erişim şifresi"]
     telemetry_keys = device_data["telemetry"].split(",")  # Split telemetry keys
-
-    # ThingsBoard URL
     telemetry_url = f"http://thingsboard.cloud/api/v1/{access_token}/telemetry"
     headers = {"Content-Type": "application/json"}
 
-    # Retrieve the start time from the session or set it if not present
-    if 'start_time' not in request.session:
-        request.session['start_time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        start_time = datetime.strptime(request.session['start_time'], "%Y-%m-%d %H:%M:%S")
-    else:
-        start_time = datetime.strptime(request.session['start_time'], "%Y-%m-%d %H:%M:%S")
+    # WebSocket setup
+    channel_layer = get_channel_layer()
+    group_name = f"device_{device_key}"
 
-    now = datetime.now()
-    elapsed_time = now - start_time
+    # Infinite loop to send telemetry data
+    while True:
+        telemetry_payload = {}
+        for key in telemetry_keys:
+            telemetry_payload[key] = round(random.uniform(20, 100), 2)  # Generate random values
 
-    # Generate 100 random data points for each second
-    for seconds in range(elapsed_time.seconds + 1):  # Include current second
-        for i in range(100):  # Generate 100 random data points
-            telemetry_payload = {}
-            for key in telemetry_keys:
-                value = round(random.uniform(20, 100), 2)
-                telemetry_payload[key] = value
+        # Add timestamp to telemetry data
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        telemetry_payload["timestamp"] = timestamp
 
-            # Update the timestamp for each data point with milliseconds precision
-            timestamp = (start_time + timedelta(seconds=seconds) + timedelta(milliseconds=i)).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-            telemetry_payload["ts"] = timestamp
+        # Send data to ThingsBoard API
+        try:
+            response = requests.post(telemetry_url, headers=headers, json=telemetry_payload)
+            if response.status_code == 200:
+                print(f"[Device {device_key}] Telemetry sent to ThingsBoard: {telemetry_payload}")
+            else:
+                print(f"[Device {device_key}] ThingsBoard Error: {response.status_code} - {response.text}")
+        except Exception as e:
+            print(f"[Device {device_key}] Exception while sending to ThingsBoard: {e}")
 
-            try:
-                response = requests.post(telemetry_url, headers=headers, json=telemetry_payload)
-                if response.status_code == 200:
-                    print(f"[Device {device_key}] Telemetry sent: {telemetry_payload}")
-                else:
-                    print(f"[Device {device_key}] Error: {response.status_code} - {response.text}")
-            except Exception as e:
-                print(f"[Device {device_key}] Exception: {e}")
+        # Send data via WebSocket
+        try:
+            async_to_sync(channel_layer.group_send)(
+                group_name,
+                {
+                    "type": "telemetry_message",
+                    "message": telemetry_payload,
+                }
+            )
+            print(f"[Device {device_key}] Telemetry sent via WebSocket: {telemetry_payload}")
+        except Exception as e:
+            print(f"[Device {device_key}] Exception while sending via WebSocket: {e}")
 
-            print(f"Telemetry Payload: {telemetry_payload}")
-
-    request.session['start_time'] = now.strftime("%Y-%m-%d %H:%M:%S")
-
-# Example usage:
-# send_random_telemetry(request, "your_device_key", {"Erişim şifresi": "your_access_token", "telemetry": "temperature,humidity"})
+        # Wait 5 seconds before sending the next telemetry data
+        time.sleep(5)
