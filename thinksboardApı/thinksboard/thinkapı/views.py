@@ -1,58 +1,56 @@
 import requests
 import json
-import io
-import os
-import tempfile
-import matplotlib.pyplot as plt
 from django.shortcuts import render, redirect
 from .forms import UserLogInForm, DevicesListForm
 from datetime import datetime
-from django.http import HttpResponse
-from openpyxl import Workbook
+import threading
+import random
+from .utils import send_random_telemetry
+import io
+import os
+import tempfile
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+import matplotlib.pyplot as plt
+from django.http import HttpResponse
+from openpyxl import Workbook
 
 BASEURL = "https://thingsboard.cloud/api"
 LOGIN_URL = f"{BASEURL}/auth/login"
 USER_URL = f"{BASEURL}/auth/user"
 
-import random
-import json
-from django.shortcuts import render
-from django.http import JsonResponse
-from .utils import make_api_request
-
-DEVICES_TELEMETRY = {
+DEVICE_ACCESS = {
     "1": {"Erişim şifresi": "pDjy7eYL9BxweVinPuBY", "telemetry": "temperature,state,rez"},
     "2": {"Erişim şifresi": "aqBEbTWN7rHlhufbRyND", "telemetry": "temperature,temp"},
     "3": {"Erişim şifresi": "5Dmo4qa8vJfkUNcP4TCy", "telemetry": "temperature,machineState"},
     "4": {"Erişim şifresi": "0oIGlBuB5Rr5rtGKJGwX", "telemetry": "temperature,clock"},
     "5": {"Erişim şifresi": "NpMnH8RUsyXZkE8LsCKx", "telemetry": "temperature,quality"},
 }
+DEVICE_TELEMETRY = {
+    "1": {
+        "uuid": "95cf0970-a5b2-11ef-af8e-935e87032cca",
+        "telemetry": "values/timeseries?keys=temperature,state,rez"
+    },
+    "2": {
+        "uuid": "cd3c12f0-a69c-11ef-9126-e7e15310409e",
+        "telemetry": "values/timeseries?keys=temp,temperature"
+    },
+    "3": {
+        "uuid": "ea345690-a6fd-11ef-8300-7376affecafe",
+        "telemetry": "values/timeseries?keys=temperature,machineState"
+    },
+    "4": {
+        "uuid": "e03eb710-a730-11ef-af8e-935e87032cca",
+        "telemetry": "values/timeseries?keys=clock,temperature"
+    },
+    "5": {
+        "uuid": "87a23920-abe9-11ef-ba27-0bc777b49120",
+        "telemetry": "values/timeseries?keys=quality,temperature"
+    }
+}
 
 THINGSBOARD_BASE_URL = "http://thingsboard.cloud/api/v1"
-
-def send_random_telemetry(request, device_id):
-    device = DEVICES_TELEMETRY.get(device_id)
-    if not device:
-        return JsonResponse({"error": "Device not found."}, status=404)
-
-    # Rastgele değerler üret
-    telemetry_keys = device["telemetry"].split(",")
-    random_telemetry = {key: random.randint(0, 100) for key in telemetry_keys}
-
-    # Telemetri URL'si oluştur
-    access_token = device["Erişim şifresi"]
-    url = f"{THINGSBOARD_BASE_URL}/{access_token}/telemetry"
-
-    # API çağrısı yap
-    headers = {'Content-Type': 'application/json'}
-    response, error = make_api_request("post", url, headers=headers, data=random_telemetry)
-
-    if error:
-        return JsonResponse({"error": error}, status=500)
-    return JsonResponse({"message": "Telemetry sent successfully", "data": random_telemetry})
 
 
 def userlogın(request):
@@ -85,111 +83,66 @@ def userlogın(request):
 
 
 def devicePrefer(request):
-    token = request.session.get('token')
-    if not token:
-        return redirect('login')
-
     if request.method == "POST":
         deviceform = DevicesListForm(request.POST)
         if deviceform.is_valid():
             device_key = deviceform.cleaned_data["device"]
-            device_data = DEVICE_TELEMETRY.get(device_key)
+            device_data = DEVICE_ACCESS.get(device_key)
+
             if not device_data:
                 return render(request, "deviceInfo.html", {"error": "Invalid device selected!"})
 
-            device_uuid = device_data["uuid"]
-            telemetry_url = device_data["telemetry"]
-            headers = {'Authorization': f'Bearer {token}'}
-
-            # Cihaz bilgilerini al
-            device_url = f"{BASEURL}/device/{device_uuid}"
-            device_response = requests.get(device_url, headers=headers)
-
-            # Telemetri bilgilerini al
-            full_telemetry_url = f"{BASEURL}/plugins/telemetry/DEVICE/{device_uuid}/{telemetry_url}"
-            telemetry_response = requests.get(full_telemetry_url, headers=headers)
-
-            if device_response.status_code != 200 or telemetry_response.status_code != 200:
-                return render(request, "deviceInfo.html", {
-                    "error": f"Error fetching data! Device: {device_response.status_code}, "
-                             f"Telemetry: {telemetry_response.status_code}"
-                })
-
-            device_info = device_response.json()
-            telemetry_info = telemetry_response.json()
-
-            # Telemetri geçmişini saklama
-            telemetry_history = request.session.get('telemetry_history', {})
-
-            # Her cihazın telemetri geçmişini ayrı bir anahtar altında sakla
-            if device_uuid not in telemetry_history:
-                telemetry_history[device_uuid] = {}
-            request.session['device_uuid'] = device_uuid
-            for key, entries in telemetry_info.items():
-                if key not in telemetry_history[device_uuid]:
-                    telemetry_history[device_uuid][key] = []
-
-                for entry in entries:
-                    # Format timestamp to human-readable time
-                    timestamp = datetime.utcfromtimestamp(entry['ts'] / 1000.0).strftime('%Y-%m-%d %H:%M:%S')
-                    entry['formatted_ts'] = timestamp
-
-                    # Eğer giriş zaten geçmişte yoksa ekle
-                    if entry not in telemetry_history[device_uuid][key]:
-                        telemetry_history[device_uuid][key].append(entry)
-
-            # Telemetri geçmişini oturumda güncelle
-            request.session['telemetry_history'] = telemetry_history
-
-            # Grafik verilerini hazırlama
+            # Create random telemetry data
+            telemetry_keys = device_data["telemetry"].split(",")
+            telemetry_history = {}
             charts_data = {}
-            for key, entries in telemetry_history[device_uuid].items():
-                chart_labels = [entry['formatted_ts'] for entry in entries]
-                chart_data = [entry['value'] for entry in entries]
-                charts_data[key] = {
-                    "labels": chart_labels,
-                    "data": chart_data
-                }
 
-            # charts_data'yı oturumda saklama
-            request.session['charts_data'] = charts_data
+            for key in telemetry_keys:
+                entries = []
+                timestamps = []
+                values = []
+                for i in range(10):  # Generate 10 random data points
+                    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    value = round(random.uniform(10, 100), 2)  # Random value between 10 and 100
+                    entries.append({"formatted_ts": ts, "value": value})
+                    timestamps.append(ts)
+                    values.append(value)
+                telemetry_history[key] = entries
+                charts_data[key] = {"labels": timestamps, "data": values}
 
-            # Cihaz ve telemetri bilgisini gönder
-            return render(request, "deviceİnformation.html", {
+            # Create device information (UUID, status, etc.)
+            device_info = {
+                "id": device_key,
+                "name": device_data.get("name", f"Device {device_key}"),  # Fetch the device name from device_data
+                "status": "active" if random.choice([True, False]) else "inactive",
+                "uuid": f"uuid-{device_key}",
+            }
+
+            # Save telemetry_history and charts_data in session
+            request.session['telemetry_history'] = {device_info["uuid"]: telemetry_history}
+            request.session['device_uuid'] = device_info["uuid"]
+            request.session['charts_data'] = charts_data  # Save charts_data (not just the uuid)
+
+            # Start a new thread to send random telemetry data
+            telemetry_thread = threading.Thread(target=send_random_telemetry, args=(device_key, device_data))
+            telemetry_thread.daemon = True  # Thread will stop when Django stops
+            telemetry_thread.start()
+
+            context = {
                 "device_info": device_info,
-                "telemetry_info": telemetry_info,
-                "telemetry_history": telemetry_history[device_uuid],
+                "telemetry_history": telemetry_history,
                 "charts_data": charts_data,
-            })
+                "message": f"Telemetry started for device {device_key}!",
+            }
+
+            return render(request, "deviceİnformation.html", context)
+
         else:
             return render(request, "deviceInfo.html", {"error": "Invalid form submission!"})
+
     else:
         deviceform = DevicesListForm()
         return render(request, "deviceInfo.html", {"deviceform": deviceform})
-
-
-DEVICE_TELEMETRY = {
-    "1": {
-        "uuid": "95cf0970-a5b2-11ef-af8e-935e87032cca",
-        "telemetry": "values/timeseries?keys=temperature,state,rez"
-    },
-    "2": {
-        "uuid": "cd3c12f0-a69c-11ef-9126-e7e15310409e",
-        "telemetry": "values/timeseries?keys=temp,temperature"
-    },
-    "3": {
-        "uuid": "ea345690-a6fd-11ef-8300-7376affecafe",
-        "telemetry": "values/timeseries?keys=temperature,machineState"
-    },
-    "4": {
-        "uuid": "e03eb710-a730-11ef-af8e-935e87032cca",
-        "telemetry": "values/timeseries?keys=clock,temperature"
-    },
-    "5": {
-        "uuid": "87a23920-abe9-11ef-ba27-0bc777b49120",
-        "telemetry": "values/timeseries?keys=quality,temperature"
-    }
-}
 
 
 def export_data(request):
@@ -227,9 +180,7 @@ def export_data(request):
 
         # Add telemetry data to the Excel sheet
         for key, entries in device_data.items():
-            # Sort entries by timestamp and value
-            sorted_entries = sorted(entries, key=lambda x: (x['formatted_ts'], x['value']))
-            for entry in sorted_entries:
+            for entry in entries:  # Use entries as is to maintain the original order
                 sheet.append([key, entry['formatted_ts'], entry['value']])
 
         response = HttpResponse(
@@ -251,13 +202,10 @@ def export_data(request):
 
         # Write data and plot for each key in the telemetry data
         for key, entries in device_data.items():
-            # Sort entries by timestamp and value
-            sorted_entries = sorted(entries, key=lambda x: (x['formatted_ts'], x['value']))
-
-            # Write sorted data to the PDF
+            # Write data to the PDF
             pdf.drawString(50, y, f"Key: {key}")
             y -= 20
-            for entry in sorted_entries:
+            for entry in entries:  # Use entries as is to maintain the original order
                 pdf.drawString(70, y, f"Timestamp: {entry['formatted_ts']}, Value: {entry['value']}")
                 y -= 20
                 if y < 100:
@@ -267,9 +215,9 @@ def export_data(request):
             # Create a plot for each key in the telemetry data
             fig, ax = plt.subplots(figsize=(8, 6))
 
-            # Extract sorted timestamps and values
-            timestamps = [entry['formatted_ts'] for entry in sorted_entries]
-            values = [entry['value'] for entry in sorted_entries]
+            # Extract timestamps and values as is
+            timestamps = [entry['formatted_ts'] for entry in entries]
+            values = [entry['value'] for entry in entries]
 
             ax.plot(timestamps, values, label=key)
 
@@ -314,17 +262,3 @@ def export_data(request):
 
     else:
         return HttpResponse("Unsupported export format.", status=400)
-
-
-'''
-DEVICE_TELEMETRY = {
-    "1": {"Erişim şifresi": "pDjy7eYL9BxweVinPuBY", "telemetry": "temperature,state,rez"},
-    "2": {"Erişim şifresi": "aqBEbTWN7rHlhufbRyND", "telemetry": "temperature,temp"},
-    "3": {"Erişim şifresi": "5Dmo4qa8vJfkUNcP4TCy", "telemetry": "temperature,machineState"},
-    "4": {"Erişim şifresi": "0oIGlBuB5Rr5rtGKJGwX", "telemetry": "temperature,clock"},
-    "5": {"Erişim şifresi": "NpMnH8RUsyXZkE8LsCKx", "telemetry": "temperature,quality"},
-}
-
-THINGSBOARD_BASE_URL = "http://thingsboard.cloud/api/v1"
-
-'''

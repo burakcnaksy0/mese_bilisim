@@ -18,6 +18,8 @@
         <button type="button" class="btn btn-primary mb-3">Back</button>
     </a>
 
+    <button type="button" class="btn btn-primary mb-3" onclick="window.location.reload();">Reload</button>
+
     <!-- Device Details -->
     {% if device_info %}
     <div class="card shadow-sm mb-5">
@@ -80,7 +82,7 @@
             <h3 class="mb-0">{{ key }}</h3>
         </div>
         <div class="card-body">
-            <canvas id="chart-{{ key }}" width="800" height="400"></canvas>
+            <canvas id="chart-{{ key }}" width="800" height="400"></canvas>z
         </div>
     </div>
     {% endfor %}
