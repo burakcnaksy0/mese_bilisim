@@ -13,6 +13,10 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import matplotlib.pyplot as plt
+import matplotlib
+from channels.layers import get_channel_layer
+
+matplotlib.use('Agg')
 from django.http import HttpResponse, JsonResponse
 from openpyxl import Workbook
 
@@ -87,18 +91,22 @@ def userlogın(request):
         return render(request, "login.html", {"form": form})
 
 
-def get_random_telemetry(request):
-    # Generate random telemetry data
-    telemetry_data = {
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "value": round(random.uniform(10, 100), 2),
-    }
-    return JsonResponse(telemetry_data)
+def get_device_telemetry(request):
+    device_uuid = request.session.get("device_uuid")
+    telemetry_history = request.session.get("telemetry_history", {})
+
+    if not device_uuid or device_uuid not in telemetry_history:
+        return JsonResponse({"error": "No data found."}, status=404)
+
+    # Return telemetry data for the device in session
+    return JsonResponse({"telemetry_history": telemetry_history[device_uuid]})
 
 
+# View for handling device preferences and telemetry data
 def devicePrefer(request):
     if request.method == "POST":
         deviceform = DevicesListForm(request.POST)
+
         if deviceform.is_valid():
             device_key = deviceform.cleaned_data["device"]
             device_data = DEVICE_ACCESS.get(device_key)
@@ -106,11 +114,12 @@ def devicePrefer(request):
             if not device_data:
                 return render(request, "deviceInfo.html", {"error": "Invalid device selected!"})
 
-            # Create random telemetry data
+            # Create random telemetry data for the device
             telemetry_keys = device_data["telemetry"].split(",")
             telemetry_history = {}
             charts_data = {}
 
+            # Generate random telemetry data
             for key in telemetry_keys:
                 entries = []
                 timestamps = []
@@ -121,6 +130,7 @@ def devicePrefer(request):
                     entries.append({"formatted_ts": ts, "value": value})
                     timestamps.append(ts)
                     values.append(value)
+
                 telemetry_history[key] = entries
                 charts_data[key] = {"labels": timestamps, "data": values}
 
@@ -140,7 +150,7 @@ def devicePrefer(request):
             request.session['charts_data'] = charts_data  # Save charts_data (not just the uuid)
 
             # Start a new thread to send random telemetry data
-            telemetry_thread = threading.Thread(target=send_random_telemetry, args=(request, device_key, device_data))
+            telemetry_thread = threading.Thread(target=send_random_telemetry, args=(device_key, device_data))
             telemetry_thread.daemon = True  # Thread will stop when Django stops
             telemetry_thread.start()
 
@@ -151,7 +161,7 @@ def devicePrefer(request):
                 "message": f"Telemetry started for device {device_key}!",
             }
 
-            return render(request, "deviceİnformation.html", context)
+            return render(request, "deviceİnformation.html", context)  # 'deviceInformation.html' olduğunu varsayıyorum
 
         else:
             return render(request, "deviceInfo.html", {"error": "Invalid form submission!"})

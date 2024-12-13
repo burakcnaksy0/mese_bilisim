@@ -43,50 +43,14 @@
     {% endif %}
 
     <!-- Telemetry History -->
-    {% if telemetry_history %}
-    <h2 class="text-center mb-3">Telemetry History</h2>
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover">
-            <thead class="table-dark">
-            <tr>
-                <th>Telemetry Key</th>
-                <th>Timestamp</th>
-                <th>Value</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for key, entries in telemetry_history.items %}
-            {% for entry in entries %}
-            <tr>
-                <td>{{ key }}</td>
-                <td>{{ entry.formatted_ts }}</td>
-                <td>{{ entry.value }}</td>
-            </tr>
-            {% endfor %}
-            {% endfor %}
-            </tbody>
-        </table>
+    <div id="telemetry-container" class="mt-4">
+        <p>Loading telemetry data...</p>
     </div>
-    {% else %}
-    <div class="alert alert-info text-center" role="alert">
-        No telemetry history available.
-    </div>
-    {% endif %}
 
     <!-- Telemetry Charts -->
-    {% if charts_data %}
-    <h2 class="text-center mt-5">Telemetry Charts</h2>
-    {% for key, chart in charts_data.items %}
-    <div class="card shadow-sm my-4">
-        <div class="card-header bg-primary text-white">
-            <h3 class="mb-0">{{ key }}</h3>
-        </div>
-        <div class="card-body">
-            <canvas id="chart-{{ key }}" width="800" height="400"></canvas>
-        </div>
+    <div id="chart-container" class="mt-5">
+        <!-- Dynamically add charts with JavaScript -->
     </div>
-    {% endfor %}
-    {% endif %}
 
     <!-- Export Form -->
     <div class="card shadow-sm my-5">
@@ -112,83 +76,126 @@
     </div>
 
 </div>
-<div id="telemetry-container">
-    <p>Loading telemetry data...</p>
-</div>
+
 <!-- Chart.js Script -->
 <script>
-    const chartsData = {{ charts_data|safe }};
+    let charts = {}; // Grafikleri dinamik olarak takip etmek için bir sözlük
 
-    for (const [key, data] of Object.entries(chartsData)) {
-        const ctx = document.getElementById(`chart-${key}`).getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.labels, // Timestamps
-                datasets: [{
-                    label: key,
-                    data: data.data, // Values
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    borderWidth: 2,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: `${key} Over Time`
-                    },
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Timestamp'
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Value'
-                        }
-                    }
+    function updateTelemetryData(data) {
+        // Tabloyu Güncelleme
+        const telemetryContainer = document.getElementById('telemetry-container');
+        telemetryContainer.innerHTML = '';  // Eski veriyi temizle
+
+        for (const [key, entries] of Object.entries(data.telemetry_history)) {
+            const section = document.createElement('div');
+            section.innerHTML = `<h3>${key}</h3><table class="table table-bordered table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${entries.map(entry => `
+                        <tr>
+                            <td>${entry.formatted_ts}</td>
+                            <td>${entry.value}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>`;
+            telemetryContainer.appendChild(section);
+        }
+
+        // Grafik Verilerini Güncelleme
+        for (const [key, chartData] of Object.entries(data.telemetry_history)) {
+            const labels = chartData.map(entry => entry.formatted_ts);
+            const values = chartData.map(entry => entry.value);
+
+            if (charts[key]) {
+                // Mevcut grafiği güncelle
+                charts[key].data.labels = labels;
+                charts[key].data.datasets[0].data = values;
+                charts[key].update();
+            } else {
+                // Yeni bir grafik oluştur
+                let chartCanvas = document.getElementById(`chart-${key}`);
+                if (!chartCanvas) {
+                    // Eğer grafik için bir canvas yoksa, oluştur
+                    chartCanvas = document.createElement('canvas');
+                    chartCanvas.id = `chart-${key}`;
+                    chartCanvas.width = 800;
+                    chartCanvas.height = 400;
+                    document.getElementById('chart-container').appendChild(chartCanvas);
                 }
+                charts[key] = new Chart(chartCanvas.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: key,
+                            data: values,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderWidth: 2,
+                            fill: true,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `${key} Over Time`
+                            },
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Timestamp'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Value'
+                                }
+                            }
+                        }
+                    }
+                });
             }
-        });
+        }
     }
+
+    const socket = new WebSocket(`ws://127.0.0.1:8000/ws/telemetry/${device_uuid}/`);
+
+    socket.onopen = function(e) {
+        console.log("WebSocket bağlantısı kuruldu!");
+        // Bağlantı kurulduğunda mesaj gönderme
+        socket.send(JSON.stringify({ message: 'Hello, server!' }));
+    };
+
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        console.log('Veri alındı: ', data);
+    };
+
+    socket.onerror = function(error) {
+        console.error('WebSocket Hatası: ', error);
+    };
+
+    socket.onclose = function(event) {
+        console.log('WebSocket bağlantısı kapandı: ', event);
+    };
 </script>
 
 <!-- Include Bootstrap JS (Optional, for enhanced interactivity) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    function fetchTelemetry() {
-        fetch('/api/telemetry/')
-            .then(response => response.json())
-            .then(data => {
-                // Gelen telemetry verisini sayfada güncelleyin
-                const telemetryContainer = document.getElementById('telemetry-container');
-                telemetryContainer.innerHTML = `
-                    <p><strong>Timestamp:</strong> ${data.timestamp}</p>
-                    <p><strong>Value:</strong> ${data.value}</p>
-                `;
-            })
-            .catch(error => console.error('Error fetching telemetry:', error));
-    }
-
-    // Sayfa yüklendiğinde başlat
-    document.addEventListener('DOMContentLoaded', function() {
-        fetchTelemetry(); // İlk veri çekme
-        setInterval(fetchTelemetry, 5000); // Her 5 saniyede bir veri çekme
-    });
-</script>
-
-
 </body>
 </html>

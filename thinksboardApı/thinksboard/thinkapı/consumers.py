@@ -3,24 +3,17 @@ import json
 
 class TelemetryConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.device_key = self.scope['url_route']['kwargs']['device_key']
-        self.group_name = f"device_{self.device_key}"
-
-        # Join WebSocket group
-        await self.channel_layer.group_add(
-            self.group_name,
-            self.channel_name
-        )
+        self.device_uuid = self.scope['url_route']['kwargs']['device_uuid']
+        await self.channel_layer.group_add(self.device_uuid, self.channel_name)
         await self.accept()
 
     async def disconnect(self, close_code):
-        # Leave WebSocket group
-        await self.channel_layer.group_discard(
-            self.group_name,
-            self.channel_name
-        )
+        await self.channel_layer.group_discard(self.device_uuid, self.channel_name)
 
-    async def telemetry_message(self, event):
-        message = event['message']
-        await self.send(text_data=json.dumps(message))
-
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        # Gelen veriyi işleyin
+        await self.send(text_data=json.dumps({
+            'message': 'Data received',
+            'data': data
+        }))

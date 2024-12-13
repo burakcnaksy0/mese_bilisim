@@ -1,6 +1,6 @@
 from django.urls import path
-from . import consumers
+from thinksboard.thinkapı.consumers import TelemetryConsumer
 
 websocket_urlpatterns = [
-    path('ws/telemetry/', consumers.TelemetryConsumer.as_asgi()),
+    path('ws/telemetry/<uuid:device_uuid>/', TelemetryConsumer.as_asgi()),
 ]

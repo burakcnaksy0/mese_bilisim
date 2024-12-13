@@ -1,0 +1,40 @@
+<table>
+    <thead>
+        <tr>
+            <th>Temperature</th>
+            <th>Machine State</th>
+            <th>Timestamp</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in data %}
+        <tr>
+            <td>{{ entry.temperature }}</td>
+            <td>{{ entry.machine_state }}</td>
+            <td>{{ entry.timestamp }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    // WebSocket bağlantısı
+    const socket = new WebSocket(`ws://127.0.0.1:8000/ws/telemetry/{{ device_uuid }}/`);
+
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+
+        // Yeni tablo satırı ekleme
+        const tableBody = document.querySelector('table tbody');
+        const newRow = `<tr>
+            <td>${data.data.temperature}</td>
+            <td>${data.data.machineState}</td>
+            <td>${data.data.timestamp}</td>
+        </tr>`;
+        tableBody.innerHTML = newRow + tableBody.innerHTML;
+    };
+
+    socket.onerror = function(error) {
+        console.error('WebSocket Error:', error);
+    };
+</script>
